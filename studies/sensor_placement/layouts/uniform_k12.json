@@ -1,0 +1,19 @@
+{
+  "name": "uniform_k12",
+  "strategy": "uniform",
+  "k": 12,
+  "sensor_indices": [
+    4,
+    8,
+    12,
+    20,
+    24,
+    28,
+    36,
+    40,
+    44,
+    52,
+    56,
+    60
+  ]
+}

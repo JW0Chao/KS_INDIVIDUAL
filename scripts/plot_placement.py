@@ -9,7 +9,16 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 
-from KS import KS
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT / "src"
+DATA_DIR = ROOT / "data"
+
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from ks_control.ks import KS
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,9 +31,9 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Sensor indices as comma list/ranges (e.g. '0,4,8-11') or path to a JSON list file.",
     )
-    ap.add_argument("--x-file", type=str, default="x.dat")
+    ap.add_argument("--x-file", type=str, default=str(DATA_DIR / "x.dat"))
     ap.add_argument("--a-dim", type=int, default=4)
-    ap.add_argument("--a-max", type=float, default=0.5, help="Action amplitude limit used when --action-values is not provided.")
+    ap.add_argument("--a-max", type=float, default=1.0, help="Action amplitude limit used when --action-values is not provided.")
     ap.add_argument(
         "--action-values",
         type=str,
@@ -48,8 +57,52 @@ def parse_args() -> argparse.Namespace:
     ap.set_defaults(overlay_forcing=True)
     ap.add_argument("--forcing-linewidth", type=float, default=1.6)
     ap.add_argument("--forcing-alpha", type=float, default=0.85)
-    ap.add_argument("--output-plot", type=str, default="sensor_actuator_positions.png")
-    ap.add_argument("--output-json", type=str, default="sensor_actuator_positions.json")
+    ap.add_argument(
+        "--actuator-marker-size",
+        type=float,
+        default=260.0,
+        help="Triangle marker area for actuator symbols.",
+    )
+    ap.add_argument(
+        "--legend-sensor-marker-size",
+        type=float,
+        default=10.0,
+        help="Legend marker size for sensors (points).",
+    )
+    ap.add_argument(
+        "--legend-actuator-marker-size",
+        type=float,
+        default=10.0,
+        help="Legend marker size for actuators (points).",
+    )
+    ap.add_argument(
+        "--legend-font-size",
+        type=float,
+        default=14.0,
+        help="Legend font size.",
+    )
+    ap.add_argument(
+        "--title-font-size",
+        type=float,
+        default=20.0,
+        help="Plot title font size.",
+    )
+    ap.add_argument(
+        "--legend-cols",
+        type=int,
+        default=4,
+        help="Number of legend columns.",
+    )
+    ap.add_argument(
+        "--output-plot",
+        type=str,
+        default=str(ROOT / "studies" / "sensor_placement" / "results" / "sensor_actuator_positions.png"),
+    )
+    ap.add_argument(
+        "--output-json",
+        type=str,
+        default=str(ROOT / "studies" / "sensor_placement" / "results" / "sensor_actuator_positions.json"),
+    )
     ap.add_argument("--no-show", action="store_true")
     return ap.parse_args()
 
@@ -86,10 +139,12 @@ def parse_sensor_indices(arg: str) -> List[int]:
     if p.exists() and p.is_file():
         data = json.loads(p.read_text(encoding="utf-8"))
         if isinstance(data, dict):
-            if "indices" in data:
+            if "sensor_indices" in data:
+                data = data["sensor_indices"]
+            elif "indices" in data:
                 data = data["indices"]
             else:
-                raise ValueError("JSON object must contain key 'indices'.")
+                raise ValueError("JSON object must contain key 'sensor_indices' or 'indices'.")
         if not isinstance(data, list):
             raise ValueError("Sensor index JSON must be a list.")
         out: List[int] = []
@@ -124,6 +179,18 @@ def main() -> None:
         raise ValueError("forcing-linewidth must be positive.")
     if args.forcing_alpha < 0.0 or args.forcing_alpha > 1.0:
         raise ValueError("forcing-alpha must be in [0, 1].")
+    if args.actuator_marker_size <= 0:
+        raise ValueError("actuator-marker-size must be positive.")
+    if args.legend_sensor_marker_size <= 0:
+        raise ValueError("legend-sensor-marker-size must be positive.")
+    if args.legend_actuator_marker_size <= 0:
+        raise ValueError("legend-actuator-marker-size must be positive.")
+    if args.legend_font_size <= 0:
+        raise ValueError("legend-font-size must be positive.")
+    if args.legend_cols <= 0:
+        raise ValueError("legend-cols must be positive.")
+    if args.title_font_size <= 0:
+        raise ValueError("title-font-size must be positive.")
 
     x = np.loadtxt(args.x_file)
     if x.ndim != 1:
@@ -146,13 +213,26 @@ def main() -> None:
     forcing_peak_positions = actuator_positions.copy()
 
     fig, ax = plt.subplots(figsize=(12, 3.8))
-    ax.plot(x, np.zeros_like(x), color="0.75", linewidth=1.0, label="Grid")
+    # Keep the baseline line visually, but do not include it in the legend.
+    ax.plot(x, np.zeros_like(x), color="0.75", linewidth=1.0, label="_nolegend_")
 
     sensor_y = 0.23
     sensor_label_y = 0.218
     ax.scatter(sensor_positions, np.full(len(sensor_positions), sensor_y), s=85, marker="o", color="tab:blue", label="Sensors")
     for k, idx in enumerate(sensor_indices):
         ax.text(sensor_positions[k], sensor_label_y, f"s{idx}", color="tab:blue", ha="center", va="top", fontsize=8)
+
+    # Always draw actuator locations on the primary axis using triangles for clear placement reference.
+    actuator_y = 0.0
+    ax.scatter(
+        actuator_positions,
+        np.full(len(actuator_positions), actuator_y),
+        s=args.actuator_marker_size,
+        marker="^",
+        color="tab:red",
+        label="Actuators",
+        zorder=5,
+    )
 
     ax2 = None
     force_line_handle = None
@@ -191,16 +271,6 @@ def main() -> None:
                 linewidths=args.forcing_linewidth,
                 alpha=args.forcing_alpha,
             )
-            # Place actuators on the forcing-amplitude axis baseline (y=0).
-            ax2.scatter(
-                float(x[peak_idx]),
-                0.0,
-                color=c,
-                marker="s",
-                s=70,
-                alpha=args.forcing_alpha,
-                edgecolors="none",
-            )
         force_line_handle = Line2D(
             [0],
             [0],
@@ -223,24 +293,34 @@ def main() -> None:
         ax2.set_ylabel("Applied force amplitude")
         ax2.set_ylim(bottom=min_applied)
         ax2.grid(False)
-    else:
-        # Fallback if forcing overlay is disabled.
-        ax.scatter(
-            actuator_positions,
-            np.full(len(actuator_positions), 0.02),
-            s=80,
-            marker="s",
-            color="tab:red",
-            label="Actuators",
-        )
-
-    ax.set_title("Sensor and Actuator Positions on x-grid")
+    ax.set_title("Sensor and Actuator Positions on x-grid", fontsize=float(args.title_font_size))
     ax.set_xlabel("x")
     ax.set_yticks([])
     # Show only the upper half (above y=0) for cleaner sensor-focused view.
     ax.set_ylim(0.0, 0.25)
     ax.grid(axis="x", alpha=0.25)
-    handles1, labels1 = ax.get_legend_handles_labels()
+    sensor_legend_handle = Line2D(
+        [0],
+        [0],
+        marker="o",
+        linestyle="None",
+        markerfacecolor="tab:blue",
+        markeredgecolor="tab:blue",
+        markersize=float(args.legend_sensor_marker_size),
+        label="Sensors",
+    )
+    actuator_legend_handle = Line2D(
+        [0],
+        [0],
+        marker="^",
+        linestyle="None",
+        markerfacecolor="tab:red",
+        markeredgecolor="tab:red",
+        markersize=float(args.legend_actuator_marker_size),
+        label="Actuators",
+    )
+    handles1 = [sensor_legend_handle, actuator_legend_handle]
+    labels1 = ["Sensors", "Actuators"]
     handles2 = []
     labels2: List[str] = []
     if force_line_handle is not None and force_peak_handle is not None:
@@ -251,8 +331,8 @@ def main() -> None:
         labels1 + labels2,
         loc="upper center",
         bbox_to_anchor=(0.5, -0.40),
-        fontsize=8,
-        ncol=5,
+        fontsize=float(args.legend_font_size),
+        ncol=int(args.legend_cols),
         borderaxespad=0.0,
         frameon=True,
     )
@@ -263,6 +343,13 @@ def main() -> None:
     if output_plot.parent != Path("."):
         output_plot.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_plot, dpi=180, bbox_inches="tight", pad_inches=0.20)
+    extra_plot_paths: List[Path] = []
+    if output_plot.suffix.lower() == ".png":
+        output_svg = output_plot.with_suffix(".svg")
+        output_pdf = output_plot.with_suffix(".pdf")
+        fig.savefig(output_svg, bbox_inches="tight", pad_inches=0.20)
+        fig.savefig(output_pdf, bbox_inches="tight", pad_inches=0.20)
+        extra_plot_paths.extend([output_svg, output_pdf])
     if not args.no_show:
         plt.show()
     plt.close(fig)
@@ -288,6 +375,8 @@ def main() -> None:
     output_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print(f"Saved plot: {output_plot}")
+    for p in extra_plot_paths:
+        print(f"Saved plot: {p}")
     print(f"Saved summary: {output_json}")
 
 

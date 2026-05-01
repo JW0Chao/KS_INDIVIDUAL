@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+tmp/
+old version/
+.DS_Store
+.worktrees/
+worktrees/
+artifacts/raw/
+artifacts/derived/evaluation/
+artifacts/derived/evaluation_smoke/
+studies/sensor_placement/results/
+studies/sensor_count/results/

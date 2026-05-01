@@ -1,0 +1,137 @@
+{
+  "study": "sensor_placement",
+  "generated_at": "2026-03-31T01:55:54Z",
+  "state_dim": 64,
+  "a_dim": 4,
+  "sensor_counts": [
+    4,
+    8,
+    12,
+    16,
+    20
+  ],
+  "placement_strategies": [
+    "uniform"
+  ],
+  "domain_length": 22.0,
+  "actuator_indices": [
+    0,
+    16,
+    32,
+    48
+  ],
+  "exclude_window": 2,
+  "periodic": true,
+  "layouts": [
+    {
+      "name": "uniform_k4",
+      "strategy": "uniform",
+      "k": 4,
+      "sensor_indices": [
+        8,
+        24,
+        40,
+        56
+      ],
+      "layout_json": "studies/sensor_placement/layouts/uniform_k4.json",
+      "plot_png": "studies/sensor_placement/results/placement_plots/uniform_k4.png",
+      "plot_json": "studies/sensor_placement/results/placement_plots/uniform_k4.json"
+    },
+    {
+      "name": "uniform_k8",
+      "strategy": "uniform",
+      "k": 8,
+      "sensor_indices": [
+        4,
+        12,
+        20,
+        28,
+        36,
+        44,
+        52,
+        60
+      ],
+      "layout_json": "studies/sensor_placement/layouts/uniform_k8.json",
+      "plot_png": "studies/sensor_placement/results/placement_plots/uniform_k8.png",
+      "plot_json": "studies/sensor_placement/results/placement_plots/uniform_k8.json"
+    },
+    {
+      "name": "uniform_k12",
+      "strategy": "uniform",
+      "k": 12,
+      "sensor_indices": [
+        4,
+        8,
+        12,
+        20,
+        24,
+        28,
+        36,
+        40,
+        44,
+        52,
+        56,
+        60
+      ],
+      "layout_json": "studies/sensor_placement/layouts/uniform_k12.json",
+      "plot_png": "studies/sensor_placement/results/placement_plots/uniform_k12.png",
+      "plot_json": "studies/sensor_placement/results/placement_plots/uniform_k12.json"
+    },
+    {
+      "name": "uniform_k16",
+      "strategy": "uniform",
+      "k": 16,
+      "sensor_indices": [
+        4,
+        7,
+        9,
+        12,
+        20,
+        23,
+        25,
+        28,
+        36,
+        39,
+        41,
+        44,
+        52,
+        55,
+        57,
+        60
+      ],
+      "layout_json": "studies/sensor_placement/layouts/uniform_k16.json",
+      "plot_png": "studies/sensor_placement/results/placement_plots/uniform_k16.png",
+      "plot_json": "studies/sensor_placement/results/placement_plots/uniform_k16.json"
+    },
+    {
+      "name": "uniform_k20",
+      "strategy": "uniform",
+      "k": 20,
+      "sensor_indices": [
+        4,
+        6,
+        8,
+        10,
+        12,
+        20,
+        22,
+        24,
+        26,
+        28,
+        36,
+        38,
+        40,
+        42,
+        44,
+        52,
+        54,
+        56,
+        58,
+        60
+      ],
+      "layout_json": "studies/sensor_placement/layouts/uniform_k20.json",
+      "plot_png": "studies/sensor_placement/results/placement_plots/uniform_k20.png",
+      "plot_json": "studies/sensor_placement/results/placement_plots/uniform_k20.json"
+    }
+  ]
+}

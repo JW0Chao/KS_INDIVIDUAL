@@ -2,10 +2,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import os
-import utils
-import model
+from . import model, utils
 
-from param_noise import AdaptiveParamNoiseSpec, ddpg_distance_metric
+from .param_noise import AdaptiveParamNoiseSpec, ddpg_distance_metric
 
 BATCH_SIZE = 200
 LEARNING_RATE = 0.001

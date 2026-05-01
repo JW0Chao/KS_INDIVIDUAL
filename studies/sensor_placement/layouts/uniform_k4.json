@@ -1,0 +1,11 @@
+{
+  "name": "uniform_k4",
+  "strategy": "uniform",
+  "k": 4,
+  "sensor_indices": [
+    8,
+    24,
+    40,
+    56
+  ]
+}
